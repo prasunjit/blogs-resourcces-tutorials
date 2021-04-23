@@ -1,0 +1,39 @@
+TWitter uses fan out approach for scalability -
+Read this first https://medium.com/@narengowda/system-design-for-twitter-e737284afc95
+Then refer below at the time interval
+https://www.youtube.com/watch?v=i_we2M2ZmNc(8.55 min)
+
+It means all the precomputataion is done and the precomputataed data is stored is Redis cache when tweet is created or written to Mysql
+
+SUMMARY
+
+USER A TWEETED
+Through Load Balancer tweet will flow into back-end servers
+Ex
+-> createTweet(api_dev_key, userId). <----Next it looks up its social graph who are your followers with this userId - EX say B, C, D are your followers
+-> create_tweet(api_dev_key, userIdA, userIDB, userIdC) <-- Next it persists this tweet for userId A( Refer the schema here - https://www.educative.io/courses/grokking-the-system-design-interview/m2G48X18NDO)
+-> create_tweet(api_dev_key, userIdA, userIDB, userIdC) <-- Next updates the Redis cache like below
+In Redis cache, it is persisisted as forms for each user like below( for details see this https://www.youtube.com/watch?v=J5auCY4ajK8, this moght be confusing but do go deeper)
+userIdB( this is the key) and it has list of below things
+tweetID, userIDA, tweetMesaga
+
+userIdBC this is the key) and it has list of below things
+tweetID, userIDA, tweetMesaga
+
+N.B - Redis is LRU cache- it deleets  user afer certain time
+
+
+USER B VIEWS TIMELINE
+readTweet(api_dev_key, userId) <-- it goes to the Redis form  B and looks up this form and receives a json file
+
+
+This is the general approach
+
+But they also do generall scalability things in theor all DBs 
+Ex
+replicating,
+Avoiding multiple indexex( Read https://www.educative.io/courses/grokking-the-system-design-interview/m2G48X18NDO, while data sharding which columns they used to shard DB and avoid multiple indexs)
+Sharding their DB ( Read https://www.educative.io/courses/grokking-the-system-design-interview/m2G48X18NDO, how they sharded theur DB)
+
+
+  
