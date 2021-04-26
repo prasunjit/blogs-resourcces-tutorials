@@ -3,7 +3,7 @@ Read this first https://medium.com/@narengowda/system-design-for-twitter-e737284
 Then refer below at the time interval
 https://www.youtube.com/watch?v=i_we2M2ZmNc(8.55 min)
 
-It means all the precomputataion is done and the precomputataed data is stored is Redis cache when tweet is created or written to Mysql
+It means all the precomputataion is done and the precomputataed data is stored is Redis cache when tweet is created or written to Mysq
 
 SUMMARY
 
@@ -13,18 +13,22 @@ Ex
 -> createTweet(api_dev_key, userId). <----Next it looks up its social graph who are your followers with this userId - EX say B, C, D are your followers
 -> create_tweet(api_dev_key, userIdA, userIDB, userIdC) <-- Next it persists this tweet for userId A( Refer the schema here - https://www.educative.io/courses/grokking-the-system-design-interview/m2G48X18NDO)
 -> create_tweet(api_dev_key, userIdA, userIDB, userIdC) <-- Next updates the Redis cache like below
-In Redis cache, it is persisisted as forms for each user like below( for details see this https://www.youtube.com/watch?v=J5auCY4ajK8, this moght be confusing but do go deeper)
-userIdB( this is the key) and it has list of below things
-tweetID, userIDA, tweetMesaga
-
-userIdBC this is the key) and it has list of below things
-tweetID, userIDA, tweetMesaga
+In Redis cache, it is persisisted as forms for each user  for details see this https://www.youtube.com/watch?v=J5auCY4ajK8, this moght be confusing but do go deeper)
 
 N.B - Redis is LRU cache- it deleets  user afer certain time
 
 
 USER B VIEWS TIMELINE
 readTweet(api_dev_key, userId) <-- it goes to the Redis form  B and looks up this form and receives a json file
+
+Let’s say you tweet and you have 20K followers.(http://highscalability.com/blog/2013/7/8/the-architecture-twitter-uses-to-deal-with-150m-active-users.html)
+What the fanout daemon will do is look up the location of all 20K users inside the Redis cluster. 
+Then it will start inserting the Tweet ID of the tweet into all those lists throughout the Redis cluster. 
+So for every write of a tweet as many as 20K inserts are occurring across the Redis cluster.
+What is being stored is the tweet ID of the generated tweet, the user ID of the originator of the tweet, and 4 bytes of bits used to mark if it’s a retweet or a reply or something else.
+Since the timeline only contains tweet IDs they must “hydrate” those tweets, that is find the text of the tweets. 
+Given an array of IDs they can do a multiget and get the tweets in parallel from T-bird.(T-bird is heir MYsql DB t stor tweets which is sharded on TweetIds. How these tweet IDs are
+generated(in a scalable way) you can read that below link)
 
 
 This is the general approach
